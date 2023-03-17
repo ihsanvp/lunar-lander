@@ -2,7 +2,7 @@ from typing import List
 import pygame
 
 from game.object import GameObject
-from game.ship import Ship
+from game.ship import Lander
 
 DEFAULT_WIDTH = 1280
 DEFAULT_HEIGHT = 720
@@ -12,7 +12,7 @@ FPS = 60
 class World :
     run: bool
     dt: float
-    player: Ship
+    player: Lander
     screen: pygame.Surface
     clock: pygame.time.Clock
     size: pygame.Vector2
@@ -23,7 +23,7 @@ class World :
         self.objects = list()
         self.run = True
         self.dt = 0
-        self.player = Ship(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2)
+        self.player = Lander(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2)
         
         
     def add(self, obj: GameObject) -> None:

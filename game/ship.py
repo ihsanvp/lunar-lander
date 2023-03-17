@@ -9,21 +9,25 @@ GREEN = (0, 250, 0)
 WIDTH = 50
 HEIGHT = 100
 GRAVITY = 0.05
-DAMPING = 0.05
+DAMPING = 0.03
 
-class Ship :
-    width: int
-    height: int
-    color: Tuple[int, int, int]
-    rotation: float
-    
-    has_gravity: bool
-    rect: pygame.Rect
-    position: pygame.Vector2
-    velocity: pygame.Vector2
-    acceleration: pygame.Vector2
-    
+LANDER_BASE = 0
+LANDER_BOOST_MAIN = 1
+LANDER_BOOST_LEFT = 2
+LANDER_BOOST_RIGHT = 3
+
+class Lander(pygame.sprite.Sprite) :
     def __init__(self, x: float = 0, y: float = 0, width = WIDTH, height = HEIGHT) -> None:
+        super(Lander, self).__init__()
+        
+        self.images = []
+        self.images.append(pygame.image.load("game/sprites/lander/lander.png"))
+        self.images.append(pygame.image.load("game/sprites/lander/lander-boost_main.png"))
+        self.images.append(pygame.image.load("game/sprites/lander/lander-boost_left.png"))
+        self.images.append(pygame.image.load("game/sprites/lander/lander-boost_right.png"))
+        
+        self.image = self.images[LANDER_BASE]
+        
         self.width = width
         self.height = height
         self.color = RED
@@ -38,38 +42,32 @@ class Ship :
         self.velocity = pygame.Vector2(0)
         self.acceleration = pygame.Vector2(0)
         
-        self.surface = pygame.Surface((width, height))
-        self.surface.set_colorkey((0, 0, 0))
-        self.surface.fill(self.color)
-        self.rect = self.surface.get_rect()
-        
-        self.fire = pygame.Surface((width, height + 10))
-        self.fire.set_colorkey((0, 0, 0))
-        self.fire.fill((250, 250, 0))
+        # self.surface = pygame.Surface((width, height))
+        # self.surface.set_colorkey((0, 0, 0))
+        # self.surface.fill(self.color)
+        self.rect = self.image.get_rect()
         
         self.has_gravity = True
         self.boosting = False
+        self.rotating = 0
         
         
     def draw(self, screen: pygame.Surface) -> None:
         # pygame.draw.rect(screen, self.color, self.rect)
         
-        self.surface.fill(self.color)
-        self.rect = self.surface.get_rect()
+        # self.surface.fill(self.color)
+        # self.rect = self.surface.get_rect()
+        # self.rect.center = (int(self.position.x), int(self.position.y))
+        
+        # self.surface.fill(self.color)
+        self.rect = self.image.get_rect()
         self.rect.center = (int(self.position.x), int(self.position.y))
         
         old_center = self.rect.center
-        new = pygame.transform.rotate(self.surface, -self.rotation)
+        new = pygame.transform.rotate(self.image, -self.rotation)
         self.rect = new.get_rect()
         self.rect.center = old_center
-        
-        old_center_fire = copy.deepcopy(old_center)
-        new_fire = pygame.transform.rotate(self.fire, -self.rotation)
-        fire_rect = copy.deepcopy(self.rect)
-        fire_rect.center = old_center_fire
-        
-        if self.boosting:
-            screen.blit(new_fire, fire_rect)
+
         screen.blit(new, self.rect)
         
     def update(self, dt: float) -> None:
@@ -100,12 +98,19 @@ class Ship :
     def boost(self, amount: float):
         self.velocity += pygame.Vector2(math.sin(math.radians(self.rotation)), -math.cos(math.radians(self.rotation))) * amount
         self.boosting = True
+        self.image = self.images[LANDER_BOOST_MAIN]
         
     def rotate_right(self, angle: float) -> None:
         self.angular_velocity += angle % 360
+        self.rotating = 1
+        self.image = self.images[LANDER_BOOST_LEFT]
     
     def rotate_left(self, angle: float) -> None:
         self.angular_velocity -= angle % 360
+        self.rotating = -1
+        self.image = self.images[LANDER_BOOST_RIGHT]
         
     def reset(self):
         self.boosting = False
+        self.rotating = 0
+        self.image = self.images[LANDER_BASE]

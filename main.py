@@ -1,4 +1,3 @@
-from game.ship import Ship
 from game.world import World
 
 
