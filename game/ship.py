@@ -1,13 +1,11 @@
 from typing import Tuple
 import pygame
 import math
-import copy
+import itertools
 
 RED = (250, 0, 0)
 GREEN = (0, 250, 0)
 
-WIDTH = 50
-HEIGHT = 100
 GRAVITY = 0.05
 DAMPING = 0.03
 
@@ -17,7 +15,7 @@ LANDER_BOOST_LEFT = 2
 LANDER_BOOST_RIGHT = 3
 
 class Lander(pygame.sprite.Sprite) :
-    def __init__(self, x: float = 0, y: float = 0, width = WIDTH, height = HEIGHT) -> None:
+    def __init__(self, x: float = 0, y: float = 0) -> None:
         super(Lander, self).__init__()
         
         self.images = []
@@ -25,12 +23,9 @@ class Lander(pygame.sprite.Sprite) :
         self.images.append(pygame.image.load("game/sprites/lander/lander-boost_main.png"))
         self.images.append(pygame.image.load("game/sprites/lander/lander-boost_left.png"))
         self.images.append(pygame.image.load("game/sprites/lander/lander-boost_right.png"))
+        self.active_images = [1, 0, 0, 0]
         
-        self.image = self.images[LANDER_BASE]
-        
-        self.width = width
-        self.height = height
-        self.color = RED
+        self.rect = self.images[0].get_rect()
     
         # Angular
         self.rotation = 0
@@ -42,33 +37,25 @@ class Lander(pygame.sprite.Sprite) :
         self.velocity = pygame.Vector2(0)
         self.acceleration = pygame.Vector2(0)
         
-        # self.surface = pygame.Surface((width, height))
-        # self.surface.set_colorkey((0, 0, 0))
-        # self.surface.fill(self.color)
-        self.rect = self.image.get_rect()
-        
         self.has_gravity = True
         self.boosting = False
         self.rotating = 0
         
         
     def draw(self, screen: pygame.Surface) -> None:
-        # pygame.draw.rect(screen, self.color, self.rect)
+        active = list(itertools.compress(self.images, self.active_images))
         
-        # self.surface.fill(self.color)
-        # self.rect = self.surface.get_rect()
-        # self.rect.center = (int(self.position.x), int(self.position.y))
-        
-        # self.surface.fill(self.color)
-        self.rect = self.image.get_rect()
+        self.rect = active[0].get_rect()
         self.rect.center = (int(self.position.x), int(self.position.y))
         
         old_center = self.rect.center
-        new = pygame.transform.rotate(self.image, -self.rotation)
-        self.rect = new.get_rect()
+        
+        self.rect = active[0].get_rect()
         self.rect.center = old_center
-
-        screen.blit(new, self.rect)
+        
+        for image in active :
+            s = pygame.transform.rotate(image, -self.rotation)
+            screen.blit(s, self.rect)
         
     def update(self, dt: float) -> None:
         self.velocity += self.acceleration
@@ -98,19 +85,23 @@ class Lander(pygame.sprite.Sprite) :
     def boost(self, amount: float):
         self.velocity += pygame.Vector2(math.sin(math.radians(self.rotation)), -math.cos(math.radians(self.rotation))) * amount
         self.boosting = True
-        self.image = self.images[LANDER_BOOST_MAIN]
+        self.active_images[LANDER_BOOST_MAIN] = 1
+        # self.image = self.images[LANDER_BOOST_MAIN]
         
     def rotate_right(self, angle: float) -> None:
         self.angular_velocity += angle % 360
         self.rotating = 1
-        self.image = self.images[LANDER_BOOST_LEFT]
+        self.active_images[LANDER_BOOST_LEFT] = 1
+        # self.image = self.images[LANDER_BOOST_LEFT]
     
     def rotate_left(self, angle: float) -> None:
         self.angular_velocity -= angle % 360
         self.rotating = -1
-        self.image = self.images[LANDER_BOOST_RIGHT]
+        self.active_images[LANDER_BOOST_RIGHT] = 1
+        # self.image = self.images[LANDER_BOOST_RIGHT]
         
     def reset(self):
         self.boosting = False
         self.rotating = 0
-        self.image = self.images[LANDER_BASE]
+        self.active_images = [1, 0, 0, 0]
+        # self.image = self.images[LANDER_BASE]
